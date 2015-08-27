@@ -56,6 +56,10 @@ func NewTimer(key string, start, end time.Time) Message {
 	return NewTimerDuration(key, end.Sub(start))
 }
 
+func NewTimerNow(key string, previous time.Time) Message {
+	return NewTimerDuration(key, time.Now().Sub(previous))
+}
+
 func NewTimerDuration(key string, duration time.Duration) Message {
 	value := int64(duration / time.Millisecond)
 	return &message{
