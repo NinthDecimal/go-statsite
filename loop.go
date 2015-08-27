@@ -18,6 +18,7 @@ var statQueue chan Message
 
 func Initialize(hostname string, prefix string) {
 	enabled = true
+	metricPrefix = prefix
 	statQueue = make(chan Message, 4096)
 	go flush(hostname)
 	log.Printf("Starting stats collector [%s] on [%s]\n", prefix, hostname)

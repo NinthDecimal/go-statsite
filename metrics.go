@@ -27,7 +27,6 @@ func (t *timer) Emit() {
 	}
 
 	go func(key string, start, end time.Time) {
-
 		select {
 		case statQueue <- NewTimer(
 			fmt.Sprintf("%s.%s", metricPrefix, key),
