@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	MESSAGE_FORMAT = "%v:%v|%v\n"
+
 	TYPE_KEY_VALUE = MessageType("kv") // - Simple Key/Value
 	TYPE_GAUGE     = MessageType("g")  // - Same as kv, compatibility with statsd gauges
 	TYPE_TIMER     = MessageType("ms") // - Timer
@@ -27,7 +29,7 @@ type message struct {
 }
 
 func (m message) String() string {
-	return fmt.Sprintf("%v:%v|%v\n", m.Key, m.Value, m.Type)
+	return fmt.Sprintf(MESSAGE_FORMAT, m.Key, m.Value, m.Type)
 }
 
 func NewKeyValue(key, value string) Message {
