@@ -38,6 +38,10 @@ func NewKeyValue(key, value string) Message {
 	}
 }
 
+func NewKeyValueInt(key string, value int) Message {
+	return NewKeyValue(key, strconv.FormatInt(int64(value), 10))
+}
+
 func NewGauge(key, value string) Message {
 	return &message{
 		Key:   key,
@@ -77,4 +81,8 @@ func NewSet(key, value string) Message {
 		Value: value,
 		Type:  TYPE_SET,
 	}
+}
+
+func NewSetInt(key string, value int) Message {
+	return NewSet(key, strconv.FormatInt(int64(value), 10))
 }
