@@ -77,3 +77,28 @@ func (t *counter) Emit() {
 		}
 	}(t.key, t.count)
 }
+
+type keyvalue struct {
+	key   string
+	value int
+}
+
+func KeyValue(key string, value int) *keyvalue {
+	return &keyvalue{key, value}
+}
+
+func (t *keyvalue) Emit() {
+	if !enabled {
+		return
+	}
+
+	go func(key string, value int) {
+		select {
+		case statQueue <- NewKeyValueInt(
+			fmt.Sprintf("%s.%s", metricPrefix, key),
+			value,
+		):
+		default:
+		}
+	}(t.key, t.value)
+}
