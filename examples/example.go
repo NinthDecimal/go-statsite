@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/kiip/go-statsite"
+	"math/rand"
 	"time"
 )
 
@@ -17,20 +18,18 @@ func init() {
 func main() {
 	flag.Parse()
 
-	client, err := statsite.NewClient(statsiteHost)
-	if err != nil {
-		panic(err)
-	}
+	statsite.Initialize(statsiteHost, "test")
 
 	for i := 0; i < iterations; i++ {
-		start := time.Now()
-		<-time.After(time.Second)
-		end := time.Now()
-
-		msg := statsite.NewTimer("test", start, end)
-
-		if err := client.Emit(msg); err != nil {
-			panic(err)
-		}
+		InstrumentedMethod()
 	}
+}
+
+func InstrumentedMethod() {
+	timer := statsite.Timer("test")
+	defer timer.Emit()
+	counter := statsite.CounterAt("test", rand.Intn(10))
+	defer counter.Emit()
+
+	<-time.After(time.Millisecond * time.Duration(rand.Intn(1000)))
 }
