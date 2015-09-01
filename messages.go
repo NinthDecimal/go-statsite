@@ -40,14 +40,10 @@ func NewKeyValue(key, value string) Message {
 	}
 }
 
-func NewKeyValueInt(key string, value int) Message {
-	return NewKeyValue(key, strconv.FormatInt(int64(value), 10))
-}
-
-func NewGauge(key, value string) Message {
+func NewGauge(key string, value int) Message {
 	return &message{
 		Key:   key,
-		Value: value,
+		Value: strconv.FormatInt(int64(value), 10),
 		Type:  TYPE_GAUGE,
 	}
 }

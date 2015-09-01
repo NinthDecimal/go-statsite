@@ -80,10 +80,10 @@ func (t *counter) Emit() {
 
 type keyvalue struct {
 	key   string
-	value int
+	value string
 }
 
-func KeyValue(key string, value int) *keyvalue {
+func KeyValue(key string, value string) *keyvalue {
 	return &keyvalue{key, value}
 }
 
@@ -92,9 +92,46 @@ func (t *keyvalue) Emit() {
 		return
 	}
 
+	go func(key string, value string) {
+		select {
+		case statQueue <- NewKeyValue(
+			fmt.Sprintf("%s.%s", metricPrefix, key),
+			value,
+		):
+		default:
+		}
+	}(t.key, t.value)
+}
+
+type gauge struct {
+	key   string
+	value int
+}
+
+func Gauge(key string) *gauge {
+	return &gauge{key, 0}
+}
+
+func GaugeAt(key string, value int) *gauge {
+	return &gauge{key, value}
+}
+
+func (t *gauge) Incr() {
+	t.value += 1
+}
+
+func (t *gauge) IncrBy(i int) {
+	t.value += i
+}
+
+func (t *gauge) Emit() {
+	if !enabled {
+		return
+	}
+
 	go func(key string, value int) {
 		select {
-		case statQueue <- NewKeyValueInt(
+		case statQueue <- NewGauge(
 			fmt.Sprintf("%s.%s", metricPrefix, key),
 			value,
 		):
