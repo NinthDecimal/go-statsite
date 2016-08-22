@@ -78,6 +78,27 @@ func (t *counter) Emit() {
 	}(t.key, t.count)
 }
 
+type timerCounter struct {
+	counter counter
+	timer   timer
+}
+
+func TimerCounter(key string) *timerCounter {
+	return &timerCounter{
+		timer{time.Now(), key},
+		counter{key, 0},
+	}
+}
+
+func (t *timerCounter) Emit() {
+	if !enabled {
+		return
+	}
+
+	t.counter.Emit()
+	t.timer.Emit()
+}
+
 type keyvalue struct {
 	key   string
 	value string
