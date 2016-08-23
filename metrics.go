@@ -79,21 +79,21 @@ func (t *counter) Emit() {
 }
 
 type timerCounter struct {
-	counter counter
-	timer   timer
+	timer   *timer
+	counter *counter
 }
 
 func TimerCounter(key string) *timerCounter {
 	return &timerCounter{
-		timer{time.Now(), key},
-		counter{key, 1},
+		Timer(key),
+		CounterAt(key, 1),
 	}
 }
 
 func TimerCounterAt(key string, i int) *timerCounter {
 	return &timerCounter{
-		timer{time.Now(), key},
-		counter{key, i},
+		Timer(key),
+		CounterAt(key, i),
 	}
 }
 
