@@ -86,8 +86,23 @@ type timerCounter struct {
 func TimerCounter(key string) *timerCounter {
 	return &timerCounter{
 		timer{time.Now(), key},
-		counter{key, 0},
+		counter{key, 1},
 	}
+}
+
+func TimerCounterAt(key string, i int) *timerCounter {
+	return &timerCounter{
+		timer{time.Now(), key},
+		counter{key, i},
+	}
+}
+
+func (t *timerCounter) Incr() {
+	t.counter.Incr()
+}
+
+func (t *timerCounter) IncrBy(i int) {
+	t.counter.IncrBy(i)
 }
 
 func (t *timerCounter) Emit() {
