@@ -26,16 +26,9 @@ func (t *timer) Emit() {
 		return
 	}
 
-	go func(key string, start, end time.Time) {
-		select {
-		case statQueue <- NewTimer(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			start,
-			end,
-		):
-		default:
-		}
-	}(t.key, t.start, time.Now())
+	statQueue <- NewTimer(fmt.Sprintf("%s.%s", metricPrefix, t.key),
+		t.start,
+		time.Now())
 }
 
 // Counter Metric
@@ -67,15 +60,10 @@ func (t *counter) Emit() {
 		return
 	}
 
-	go func(key string, count int) {
-		select {
-		case statQueue <- NewCounter(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			count,
-		):
-		default:
-		}
-	}(t.key, t.count)
+	statQueue <- NewCounter(
+		fmt.Sprintf("%s.%s", metricPrefix, t.key),
+		t.count,
+	)
 }
 
 type keyvalue struct {
@@ -92,15 +80,10 @@ func (t *keyvalue) Emit() {
 		return
 	}
 
-	go func(key string, value string) {
-		select {
-		case statQueue <- NewKeyValue(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			value,
-		):
-		default:
-		}
-	}(t.key, t.value)
+	statQueue <- NewKeyValue(
+		fmt.Sprintf("%s.%s", metricPrefix, t.key),
+		t.value,
+	)
 }
 
 type gauge struct {
@@ -129,13 +112,8 @@ func (t *gauge) Emit() {
 		return
 	}
 
-	go func(key string, value int) {
-		select {
-		case statQueue <- NewGauge(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			value,
-		):
-		default:
-		}
-	}(t.key, t.value)
+	statQueue <- NewGauge(
+		fmt.Sprintf("%s.%s", metricPrefix, t.key),
+		t.value,
+	)
 }
