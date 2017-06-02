@@ -2,11 +2,27 @@ package statsite
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
+var publishWG sync.WaitGroup
+
 type Metric interface {
 	Emit()
+}
+
+func publish(message Message) {
+	publishWG.Add(1)
+	defer publishWG.Done()
+
+	if !enabled {
+		return
+	}
+	select {
+	case statQueue <- message:
+	default:
+	}
 }
 
 // Timer Metric
@@ -25,10 +41,12 @@ func (t *timer) Emit() {
 	if !enabled {
 		return
 	}
-
-	statQueue <- NewTimer(fmt.Sprintf("%s.%s", metricPrefix, t.key),
+	timer := NewTimer(
+		fmt.Sprintf("%s.%s", metricPrefix, t.key),
 		t.start,
-		time.Now())
+		time.Now(),
+	)
+	go publish(timer)
 }
 
 // Counter Metric
@@ -60,10 +78,44 @@ func (t *counter) Emit() {
 		return
 	}
 
-	statQueue <- NewCounter(
-		fmt.Sprintf("%s.%s", metricPrefix, t.key),
-		t.count,
-	)
+	counter := NewCounter(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.count)
+	go publish(counter)
+}
+
+type timerCounter struct {
+	timer   *timer
+	counter *counter
+}
+
+func TimerCounter(key string) *timerCounter {
+	return &timerCounter{
+		Timer(key),
+		CounterAt(key, 1),
+	}
+}
+
+func TimerCounterAt(key string, i int) *timerCounter {
+	return &timerCounter{
+		Timer(key),
+		CounterAt(key, i),
+	}
+}
+
+func (t *timerCounter) Incr() {
+	t.counter.Incr()
+}
+
+func (t *timerCounter) IncrBy(i int) {
+	t.counter.IncrBy(i)
+}
+
+func (t *timerCounter) Emit() {
+	if !enabled {
+		return
+	}
+
+	t.counter.Emit()
+	t.timer.Emit()
 }
 
 type keyvalue struct {
@@ -80,10 +132,8 @@ func (t *keyvalue) Emit() {
 		return
 	}
 
-	statQueue <- NewKeyValue(
-		fmt.Sprintf("%s.%s", metricPrefix, t.key),
-		t.value,
-	)
+	kv := NewKeyValue(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.value)
+	go publish(kv)
 }
 
 type gauge struct {
@@ -112,8 +162,6 @@ func (t *gauge) Emit() {
 		return
 	}
 
-	statQueue <- NewGauge(
-		fmt.Sprintf("%s.%s", metricPrefix, t.key),
-		t.value,
-	)
+	guage := NewGauge(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.value)
+	go publish(guage)
 }

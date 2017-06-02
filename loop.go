@@ -16,7 +16,7 @@ var ErrorWaitTime time.Duration = time.Duration(10 * time.Second)
 var metricPrefix string
 
 var statQueue chan Message
-var wg sync.WaitGroup
+var flushWG sync.WaitGroup
 
 func Initialize(hostname string, prefix string) {
 	enabled = true
@@ -27,8 +27,8 @@ func Initialize(hostname string, prefix string) {
 }
 
 func flush(hostname string) {
-	wg.Add(1)
-	defer wg.Done()
+	flushWG.Add(1)
+	defer flushWG.Done()
 	if !enabled {
 		return
 	}
@@ -80,6 +80,6 @@ func Shutdown() {
 	// No more metrics, disable the flusher and return
 	enabled = false
 	close(statQueue)
-	wg.Wait()
+	flushWG.Wait()
 
 }
