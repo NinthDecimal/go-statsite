@@ -7,22 +7,15 @@ import (
 )
 
 var publishWG sync.WaitGroup
+var publishEnabled bool = false
 
 type Metric interface {
 	Emit()
 }
 
 func publish(message Message) {
-	publishWG.Add(1)
 	defer publishWG.Done()
-
-	if !enabled {
-		return
-	}
-	select {
-	case statQueue <- message:
-	default:
-	}
+	statQueue <- message
 }
 
 // Timer Metric
@@ -38,7 +31,7 @@ func Timer(key string) *timer {
 }
 
 func (t *timer) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 	timer := NewTimer(
@@ -46,6 +39,7 @@ func (t *timer) Emit() {
 		t.start,
 		time.Now(),
 	)
+	publishWG.Add(1)
 	go publish(timer)
 }
 
@@ -74,11 +68,12 @@ func (t *counter) IncrBy(i int) {
 }
 
 func (t *counter) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
 	counter := NewCounter(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.count)
+	publishWG.Add(1)
 	go publish(counter)
 }
 
@@ -110,7 +105,7 @@ func (t *timerCounter) IncrBy(i int) {
 }
 
 func (t *timerCounter) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
@@ -128,11 +123,12 @@ func KeyValue(key string, value string) *keyvalue {
 }
 
 func (t *keyvalue) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
 	kv := NewKeyValue(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.value)
+	publishWG.Add(1)
 	go publish(kv)
 }
 
@@ -158,10 +154,11 @@ func (t *gauge) IncrBy(i int) {
 }
 
 func (t *gauge) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
 	guage := NewGauge(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.value)
+	publishWG.Add(1)
 	go publish(guage)
 }
