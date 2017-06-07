@@ -89,7 +89,6 @@ func (s *ClientSuite) TestEmitDouble(c *C) {
 	c.Assert(err, IsNil)
 	// Expect 1 stat added to statsite
 	c.Assert(s.mockStatsite.Count(), Equals, 1)
-	m.Connect()
 	m.Emit(msg)
 	c.Assert(s.mockStatsite.Count(), Equals, 2)
 }

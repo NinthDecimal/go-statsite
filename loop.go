@@ -6,12 +6,16 @@ import (
 	"time"
 )
 
-// Whether to enable StatSiteMetrics
-var enabled bool = false
+// enabled controls whether to enable StatsiteMetrics
+var enabled = false
 var l sync.Mutex
 
-// Time to wait on error
-var ErrorWaitTime time.Duration = time.Duration(10 * time.Second)
+// ErrorWaitTime represents the Time to wait on error
+var ErrorWaitTime = time.Duration(10 * time.Second)
+
+// ShutdownTimeout represents how long each waitgroup is given to shutdown
+// cleanly
+var ShutdownTimeout = time.Duration(10 * time.Second)
 
 // Metric Prefix
 var metricPrefix string
@@ -19,12 +23,14 @@ var metricPrefix string
 var statQueue chan Message
 var flushWG sync.WaitGroup
 
+// Initialize creates a new statsite client and starts the flusher
 func Initialize(hostname string, prefix string) {
 	client := NewClient(hostname)
 	log.Printf("Starting stats collector [%s] on [%s]\n", prefix, hostname)
 	InitializeWithClient(prefix, client)
 }
 
+// InitializeWithClient creates takes a statsite client and starts the flusher
 func InitializeWithClient(prefix string, client Client) {
 	enable()
 	metricPrefix = prefix
@@ -46,10 +52,11 @@ Connect:
 	// Returns a statsite.Client and an error
 	// var client Client
 	err = client.Connect()
+	defer client.Close()
+
 	if err != nil {
 		goto Wait
 	}
-	// defer client.Close()
 
 	for {
 		msg, more := <-statQueue
@@ -97,6 +104,20 @@ func disable() {
 	l.Unlock()
 }
 
+func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	finished := make(chan struct{})
+	go func() {
+		defer close(finished)
+		wg.Wait()
+	}()
+	select {
+	case <-finished:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
+}
+
 // Shutdown is used to cleanly shutdown go-statsite, flushing all metrics before
 // exiting.
 func Shutdown() {
@@ -106,13 +127,12 @@ func Shutdown() {
 	// Disable publishing new metrics
 	disablePublish()
 	// Wait for all in-flight metrics to be added to the statQueue
-	publishWG.Wait()
+	waitTimeout(&publishWG, ShutdownTimeout)
 	// Close the statQueue signaling the flusher to flush all enququed metrics
 	// and exit
 	close(statQueue)
 	// Wait for the flusher to flush all enqueue metrics
-	flushWG.Wait()
+	waitTimeout(&flushWG, ShutdownTimeout)
 	// Disable Flushing
 	disable()
-
 }

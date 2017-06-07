@@ -1,0 +1,21 @@
+language: go
+go:
+  - 1.8.1
+
+env:
+  global:
+  - secure: "JsY3EFR9cnoQqp9U0PvYNKSdM7jyb2EtZPcuG0I1rqc5wZTuu0IcxsJNkzqJMSCsW9SeuDKPRNgxnetfmHMwlWVuHvC84SqAp/CmIr2/nmZGML5+1xkypDugzrHBg/SqXgFwS3DWKdfXZ48eJhJ0tLG70OJFv1Q5NiQZZeIKVoE6T5Yu8Zl7b3FhEIwUABoNvK3jok/q/Qa51up96Rr8mqFx8+3YlYYjFWXaG1lIUHn97jhsceH/5juZL/7INFDKG5R+0tpQrlW+9w9kwU/gDbIsKzFCYA3/5LCU/9fGHF8Mh+aMFDneow0RUtDCQcd1wFyEdKFz1IxroVyUcS1+liChCQkh328OWtKhHBFjE+FjUSUx0xuFh7Pn3a/ts2dVY0fDAVBK9NF9e6uB65xDW5Eas6BpFq+uYsosmb7VmANlS05NY8PQZCOifKYZwepqJPwnBGLDIpYgcADaITNrPwz4EXEGmxL/nCAbTZhCveaDA5sZjgvC+7fZ3+ihihsjF0EFHKbJAQwFEl2UqvP+UwfV0OoAeg/GlNe7lF4/EtLna4pkvboQnP40Lf1LUB1IRLHAh6Ww5Fu7MbFgnhTcn5pAwB1CSs0kQL+8GSaLr6pv1ptrBJUZmFaG6jDtipNd7vRvRIlZh6rSZJzIhRHMH6G2RuYKuliXFUNwENm/gqQ="
+
+script:
+  - go get -t -d -v ./...
+  - go test -v -race ./...
+
+
+notifications:
+  hipchat:
+    rooms:
+      - $TRAVIS_ROOM
+    template:
+      - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
+    format: html
+    notify: true
