@@ -9,6 +9,7 @@ import (
 var publishWG sync.WaitGroup
 var publishEnabled bool = false
 
+// Metric represents a statsite metric
 type Metric interface {
 	Emit()
 }
