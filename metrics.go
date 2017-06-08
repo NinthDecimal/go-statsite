@@ -2,11 +2,21 @@ package statsite
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
+var publishWG sync.WaitGroup
+var publishEnabled bool = false
+
+// Metric represents a statsite metric
 type Metric interface {
 	Emit()
+}
+
+func publish(message Message) {
+	defer publishWG.Done()
+	statQueue <- message
 }
 
 // Timer Metric
@@ -22,20 +32,16 @@ func Timer(key string) *timer {
 }
 
 func (t *timer) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
-
-	go func(key string, start, end time.Time) {
-		select {
-		case statQueue <- NewTimer(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			start,
-			end,
-		):
-		default:
-		}
-	}(t.key, t.start, time.Now())
+	timer := NewTimer(
+		fmt.Sprintf("%s.%s", metricPrefix, t.key),
+		t.start,
+		time.Now(),
+	)
+	publishWG.Add(1)
+	go publish(timer)
 }
 
 // Counter Metric
@@ -63,19 +69,49 @@ func (t *counter) IncrBy(i int) {
 }
 
 func (t *counter) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
-	go func(key string, count int) {
-		select {
-		case statQueue <- NewCounter(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			count,
-		):
-		default:
-		}
-	}(t.key, t.count)
+	counter := NewCounter(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.count)
+	publishWG.Add(1)
+	go publish(counter)
+}
+
+type timerCounter struct {
+	timer   *timer
+	counter *counter
+}
+
+func TimerCounter(key string) *timerCounter {
+	return &timerCounter{
+		Timer(key),
+		CounterAt(key, 1),
+	}
+}
+
+func TimerCounterAt(key string, i int) *timerCounter {
+	return &timerCounter{
+		Timer(key),
+		CounterAt(key, i),
+	}
+}
+
+func (t *timerCounter) Incr() {
+	t.counter.Incr()
+}
+
+func (t *timerCounter) IncrBy(i int) {
+	t.counter.IncrBy(i)
+}
+
+func (t *timerCounter) Emit() {
+	if !publishEnabled {
+		return
+	}
+
+	t.counter.Emit()
+	t.timer.Emit()
 }
 
 type timerCounter struct {
@@ -124,19 +160,13 @@ func KeyValue(key string, value string) *keyvalue {
 }
 
 func (t *keyvalue) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
-	go func(key string, value string) {
-		select {
-		case statQueue <- NewKeyValue(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			value,
-		):
-		default:
-		}
-	}(t.key, t.value)
+	kv := NewKeyValue(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.value)
+	publishWG.Add(1)
+	go publish(kv)
 }
 
 type gauge struct {
@@ -161,17 +191,11 @@ func (t *gauge) IncrBy(i int) {
 }
 
 func (t *gauge) Emit() {
-	if !enabled {
+	if !publishEnabled {
 		return
 	}
 
-	go func(key string, value int) {
-		select {
-		case statQueue <- NewGauge(
-			fmt.Sprintf("%s.%s", metricPrefix, key),
-			value,
-		):
-		default:
-		}
-	}(t.key, t.value)
+	guage := NewGauge(fmt.Sprintf("%s.%s", metricPrefix, t.key), t.value)
+	publishWG.Add(1)
+	go publish(guage)
 }

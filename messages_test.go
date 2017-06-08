@@ -38,25 +38,14 @@ func TestKeyValueMessage(t *testing.T) {
 	Assert(t, TYPE_KEY_VALUE, m.Type)
 }
 
-func TestKeyValueIntMessage(t *testing.T) {
-	key := "foo"
-	val := "10"
-
-	m := NewKeyValueInt(key, 10).(*message)
-
-	Assert(t, key, m.Key)
-	Assert(t, val, m.Value)
-	Assert(t, TYPE_KEY_VALUE, m.Type)
-}
-
 func TestGaugeMessage(t *testing.T) {
 	key := "foo"
-	val := "bar"
+	val := 10
 
 	m := NewGauge(key, val).(*message)
 
 	Assert(t, key, m.Key)
-	Assert(t, val, m.Value)
+	Assert(t, "10", m.Value)
 	Assert(t, TYPE_GAUGE, m.Type)
 }
 
@@ -82,6 +71,15 @@ func TestTimerMessage(t *testing.T) {
 	Assert(t, key, m.Key)
 	Assert(t, "1000", m.Value)
 	Assert(t, TYPE_TIMER, m.Type)
+}
+
+func TestTimerNow(t *testing.T) {
+	key := "foo"
+	start, _ := time.Parse(time.Stamp, "Jan 02 15:04:05")
+
+	m := NewTimerNow(key, start).(*message)
+
+	Assert(t, key, m.Key)
 }
 
 func TestCounterMessage(t *testing.T) {
