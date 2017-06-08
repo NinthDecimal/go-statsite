@@ -114,42 +114,6 @@ func (t *timerCounter) Emit() {
 	t.timer.Emit()
 }
 
-type timerCounter struct {
-	timer   *timer
-	counter *counter
-}
-
-func TimerCounter(key string) *timerCounter {
-	return &timerCounter{
-		Timer(key),
-		CounterAt(key, 1),
-	}
-}
-
-func TimerCounterAt(key string, i int) *timerCounter {
-	return &timerCounter{
-		Timer(key),
-		CounterAt(key, i),
-	}
-}
-
-func (t *timerCounter) Incr() {
-	t.counter.Incr()
-}
-
-func (t *timerCounter) IncrBy(i int) {
-	t.counter.IncrBy(i)
-}
-
-func (t *timerCounter) Emit() {
-	if !enabled {
-		return
-	}
-
-	t.counter.Emit()
-	t.timer.Emit()
-}
-
 type keyvalue struct {
 	key   string
 	value string
