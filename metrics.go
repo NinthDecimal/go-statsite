@@ -16,7 +16,11 @@ type Metric interface {
 
 func publish(message Message) {
 	defer publishWG.Done()
-	statQueue <- message
+	select {
+	case statQueue <- message:
+	default:
+		// Channel is full so we are dropping metric
+	}
 }
 
 // Timer Metric
