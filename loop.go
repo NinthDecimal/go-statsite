@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const ChannelSize = 8096
+
 // enabled controls whether to enable StatsiteMetrics
 var enabled = false
 var l sync.Mutex
@@ -34,7 +36,7 @@ func Initialize(hostname string, prefix string) {
 func InitializeWithClient(prefix string, client Client) {
 	enable()
 	metricPrefix = prefix
-	statQueue = make(chan Message, 4096)
+	statQueue = make(chan Message, ChannelSize)
 	flushWG.Add(1)
 	go flush(client)
 }
